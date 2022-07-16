@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 
 import { ContactForm } from 'components/ContactForm';
@@ -10,94 +10,72 @@ import { Title } from 'components/Title/Title';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
+export default function useLocalStorage(key, defaultValue) {
+  const [state, setState] = useState(
+    () => JSON.parse(window.localStorage.getItem(key)) ?? defaultValue
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem(key, JSON.stringify(state));
+  }, [key, state]);
+  return [state, setState];
+}
+
+export const App = () => {
+  const [contacts, setContacts] = useLocalStorage('contactList', []);
+  const [filter, setFilter] = useState('');
+
+  const handleFilterChange = e => {
+    setFilter(e.currentTarget.value);
   };
 
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    if (contacts) {
-      try {
-        const parsecontacts = JSON.parse(contacts);
-        this.setState({ contacts: parsecontacts });
-      } catch {
-        this.setState({ contacts: [] });
-      }
-    }
-  }
-
-  componentDidUpdate(_, prevState) {
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  handleFilterChange = e => {
-    const { name, value } = e.currentTarget;
-    this.setState({ [name]: value });
-  };
-
-  filtrationContacts = value => {
+  const filteredContacts = value => {
     const filterNormalize = value.toLowerCase();
 
-    return this.state.contacts
+    return contacts
       .filter(contact => {
         return contact.name.toLowerCase().includes(filterNormalize);
       })
       .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  handleSubmit = ({ name, number }) => {
-    this.setState(prevState => {
-      const { contacts } = prevState;
-      const isContact = contacts.find(contact => contact.name === name);
+  const contactDelete = id => {
+    setContacts(state => state.filter(contact => contact.id !== id));
+  };
 
-      if (isContact) {
-        toast.error(`${name} is already in contact`, {
-          autoClose: 3000,
-        });
-        return contacts;
-      } else {
-        return {
-          contacts: [
-            {
-              id: nanoid(),
-              name,
-              number,
-            },
-            ...contacts,
-          ],
+  const handleSubmit = ({ name, number }) => {
+    const isContact = contacts.find(contact => contact.name === name);
+    if (isContact) {
+      toast.error(`${name} is already in contact`, {
+        autoClose: 3000,
+      });
+    } else {
+      setContacts(state => {
+        const newContact = {
+          id: nanoid(),
+          name,
+          number,
         };
-      }
-    });
+        return [newContact, ...state];
+      });
+    }
   };
-  contactDelete = id => {
-    this.setState(prevState => {
-      const { contacts } = prevState;
-      const contactsAfterDelete = contacts.filter(contact => contact.id !== id);
-      return { contacts: [...contactsAfterDelete] };
-    });
-  };
-  render() {
-    const { filter } = this.state;
-    return (
-      <Container>
-        <Title>Phone Book</Title>
-        <ContactForm onSubmit={this.handleSubmit} />
-        <Title>Contacts</Title>
-        <Filter
-          title="Find contact by name"
-          onChange={this.handleFilterChange}
-          value={filter}
-        />
-        <ContactList
-          filtrationContacts={this.filtrationContacts(filter)}
-          onDelete={this.contactDelete}
-        />
-        <ToastContainer />
-      </Container>
-    );
-  }
-}
+
+  return (
+    <Container>
+      <Title>Phone Book</Title>
+      <ContactForm onSubmit={handleSubmit} />
+      <Title>Contacts</Title>
+      <Filter
+        title="Find contact by name"
+        onChange={handleFilterChange}
+        value={filter}
+      />
+      <ContactList
+        filtrationContacts={filteredContacts(filter)}
+        onDelete={contactDelete}
+      />
+      <ToastContainer />
+    </Container>
+  );
+};
