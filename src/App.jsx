@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { nanoid } from 'nanoid';
 
+import { useLocalStorage } from 'hooks/HooklocalStorage';
 import { ContactForm } from 'components/ContactForm';
 import { ContactList } from 'components/ContactList';
 import { Filter } from 'components/Filter';
@@ -9,17 +10,6 @@ import { Title } from 'components/Title/Title';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-export default function useLocalStorage(key, defaultValue) {
-  const [state, setState] = useState(
-    () => JSON.parse(window.localStorage.getItem(key)) ?? defaultValue
-  );
-
-  useEffect(() => {
-    window.localStorage.setItem(key, JSON.stringify(state));
-  }, [key, state]);
-  return [state, setState];
-}
 
 export const App = () => {
   const [contacts, setContacts] = useLocalStorage('contactList', []);
