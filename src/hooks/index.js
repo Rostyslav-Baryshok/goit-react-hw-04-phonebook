@@ -1,1 +1,1 @@
-export * from './HooklocalStorage';
+export * from './useLocalStorage';

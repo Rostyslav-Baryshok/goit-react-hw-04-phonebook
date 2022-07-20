@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { nanoid } from 'nanoid';
 
-import { useLocalStorage } from 'hooks/HooklocalStorage';
+import { useLocalStorage } from 'hooks/useLocalStorage';
 import { ContactForm } from 'components/ContactForm';
 import { ContactList } from 'components/ContactList';
 import { Filter } from 'components/Filter';
